@@ -42,7 +42,6 @@ namespace eBookLibrary.Controllers
                     IsBorrowed = ub.IsBorrowed,
                     BorrowEndDate = ub.BorrowEndDate,
                     IsOwned = ub.IsOwned,
-                    Format = ub.Book.Formats // Fetch the format field
         })
                 .ToList();
 
@@ -89,45 +88,7 @@ namespace eBookLibrary.Controllers
             return RedirectToAction("Index");
         }
         [HttpGet]
-        public ActionResult DownloadBook(int bookId)
-        {
-            if (Session["UserId"] == null)
-            {
-                TempData["Error"] = "User is not logged in.";
-                return RedirectToAction("Login", "Account");
-            }
 
-            int userId = Convert.ToInt32(Session["UserId"]);
-            var userBook = _context.UserBooks
-                .Include(ub => ub.Book)
-                .SingleOrDefault(ub => ub.BookId == bookId && ub.UserId == userId);
-
-            if (userBook == null)
-            {
-                TempData["Error"] = "Book not found in your library.";
-                return RedirectToAction("Index");
-            }
-
-            var book = userBook.Book;
-
-            if (string.IsNullOrEmpty(book.Formats))
-            {
-                TempData["Error"] = "This book does not have a downloadable format.";
-                return RedirectToAction("Index");
-            }
-
-            // Path to the book file
-            var filePath = Server.MapPath($"~/Content/Books/{book.Title}.{book.Formats.ToLower()}");
-
-            if (!System.IO.File.Exists(filePath))
-            {
-                TempData["Error"] = "The book file does not exist.";
-                return RedirectToAction("Index");
-            }
-
-            // Return the file for download
-            return File(filePath, "application/octet-stream", $"{book.Title}.{book.Formats.ToLower()}");
-        }
 
 
 

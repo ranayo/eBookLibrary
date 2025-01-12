@@ -18,10 +18,12 @@ namespace eBookLibrary.Controllers
         // GET: UserFeedback
         public ActionResult Index()
         {
+            // Fetch feedback from the database, order by most recent
             var feedbacks = _context.UserFeedbacks
                 .OrderByDescending(f => f.SubmittedAt)
                 .ToList();
 
+            // Pass feedbacks to the view
             return View(feedbacks);
         }
 
@@ -36,17 +38,29 @@ namespace eBookLibrary.Controllers
                 return RedirectToAction("Index");
             }
 
-            var feedback = new UserFeedback
+            try
             {
-                Rating = rating,
-                FeedbackContent = feedbackContent,
-                SubmittedAt = DateTime.Now
-            };
+                // Create a new feedback record
+                var feedback = new UserFeedback
+                {
+                    Rating = rating,
+                    FeedbackContent = feedbackContent,
+                    SubmittedAt = DateTime.Now
+                };
 
-            _context.UserFeedbacks.Add(feedback);
-            _context.SaveChanges();
+                // Save the feedback to the database
+                _context.UserFeedbacks.Add(feedback);
+                _context.SaveChanges();
 
-            TempData["Message"] = "Thank you for your feedback!";
+                TempData["Message"] = "Thank you for your feedback!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "An error occurred while saving your feedback. Please try again.";
+                // Optionally log the exception (not shown here)
+            }
+
+            // Redirect to Index to refresh the feedback list
             return RedirectToAction("Index");
         }
 
@@ -60,4 +74,3 @@ namespace eBookLibrary.Controllers
         }
     }
 }
-

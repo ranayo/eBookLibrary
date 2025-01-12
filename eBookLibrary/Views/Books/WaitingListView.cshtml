@@ -1,6 +1,11 @@
 ﻿@model eBookLibrary.Models.WaitingListPageViewModel
 
 <div class="container mt-5">
+    <div class="text-end mb-4">
+        <a href="/Books/Index" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to All Books
+        </a>
+    </div>
     <!-- Page Title -->
     <div class="text-center mb-4">
         <h2 class="text-primary">Waiting List for <strong>@Model.BookTitle</strong></h2>
@@ -31,22 +36,22 @@
     <!-- Waiting List Information -->
     @if (Model.WaitingList.Any())
     {
-    <div class="card border-primary mb-4">
-        <div class="card-header bg-primary text-white">
-            <h4 class="col-md-push-6 text-center text-uppercase ">Current Waiting List</h4>
-        </div>
+        <div class="card border-primary mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="col-md-push-6 text-center text-uppercase ">Current Waiting List</h4>
+            </div>
 
-        <div class="card-body">
-            <p class="text-secondary">
-                <i class="fas fa-users"></i> There are currently
-                <span class="badge bg-primary">@Model.WaitingList.Count</span> people waiting for this book.
-            </p>
-            <p class="text-secondary">
-                <i class="fas fa-clock"></i> The next copy will be available in approximately
-                <span class="badge bg-secondary">@(30 * Model.WaitingList.Count) days</span>.
-            </p>
+            <div class="card-body">
+                <p class="text-secondary">
+                    <i class="fas fa-users"></i> There are currently
+                    <span class="badge bg-primary">@Model.WaitingList.Count</span> people waiting for this book.
+                </p>
+                <p class="text-secondary">
+                    <i class="fas fa-clock"></i> The next copy will be available in approximately
+                    <span class="badge bg-secondary">@(30 * Model.WaitingList.Count) days</span>.
+                </p>
+            </div>
         </div>
-    </div>
 
         <!-- Waiting List Table -->
         <div class="table-responsive">

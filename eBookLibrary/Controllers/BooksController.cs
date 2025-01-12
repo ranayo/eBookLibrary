@@ -29,8 +29,10 @@ namespace eBookLibrary.Controllers
         }
 
         // Display all books with filters
-        public ActionResult Index(string search, string sortBy, string genre, int? ageLimit, bool? onSale, int? yearOfPublishing, string availability)
+        public ActionResult Index(string search, string sortBy, string genre, int? ageLimit, bool? onSale, int? yearOfPublishing, string availability, int? page)
         {
+            int pageSize = 10; // Number of books per page
+            int pageNumber = page ?? 1;
             var books = _context.Books.AsQueryable();
 
             ViewBag.Genres = _context.Books.Select(b => b.Genre).Distinct().ToList();
@@ -90,7 +92,12 @@ namespace eBookLibrary.Controllers
                     break;
             }
 
-            return View(books.ToList());
+            // Paginate results
+            var pagedBooks = books.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+            ViewBag.TotalPages = (int)Math.Ceiling((double)books.Count() / pageSize);
+            ViewBag.CurrentPage = pageNumber;
+
+            return View(pagedBooks);
         }
 
         [HttpPost]

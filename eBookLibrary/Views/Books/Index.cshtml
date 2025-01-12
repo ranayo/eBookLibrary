@@ -1,17 +1,152 @@
 ﻿@model IEnumerable<eBookLibrary.Models.Book>
+<style>
+    /* General Page Styling */
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+        color: #333;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    h2 {
+        font-weight: bold;
+        color: #007bff;
+    }
+
+    /* Navbar Styling */
+    .navbar {
+        display: flex;
+    }
+
+        .navbar a {
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+            .navbar a:hover {
+                background-color: #0056b3;
+            }
+
+    /* Filter Form Styling */
+    form {
+        margin-bottom: 20px;
+    }
+
+
+    label {
+        font-weight: bold;
+    }
+
+    input,
+    select {
+        display: block;
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    button[type="submit"] {
+        width: 150px;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        button[type="submit"]:hover {
+            background-color: #218838;
+        }
+
+    /* Table Styling */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+        table thead {
+            background-color: #343a40;
+            color: white;
+        }
+
+        table th,
+        table td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+    .table-success {
+        background-color: #d4edda !important;
+    }
+
+    /* Pagination Styling */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        padding: 10px;
+        list-style: none;
+        gap: 5px;
+    }
+
+    .page-item {
+        border: 1px solid #007bff;
+        border-radius: 5px;
+    }
+
+        .page-item a {
+            padding: 8px 12px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .page-item.active a {
+            background-color: #007bff;
+            color: white;
+        }
+</style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>All Books</h2>
     <!-- Log Out Button -->
-    <form method="post" action="/Login/LogOut">
-        <button type="submit" class="btn btn-danger">Log Out</button>
-    </form>
+
+   
+        <a href="/Login/LogOut" class="btn btn-danger btn-lg mx-2 my-2">🔒 Log Out</a>
+   
+    <!-- Navigation Bar -->
+    <div class="navbar mb-3">
+        <a href="/User/PersonalPage" class="btn btn-secondary">Personal Page</a>
+    </div>
+
 </div>
 
-<!-- Navigation Bar -->
-<div class="navbar mb-3">
-    <a href="/User/PersonalPage" class="btn btn-secondary">Personal Page</a>
-</div>
+
 
 <!-- Display Error/Message -->
 @if (TempData.ContainsKey("Error"))
@@ -81,7 +216,7 @@
             <option value="18" @(Request.QueryString["ageLimit"] == "18" ? "selected" : "")>18+</option>
         </select>
     </div>
-    <div class="col-md-1">
+    <div class="col-md-1 mb-2">
         <label>On Sale</label>
         <div class="form-check">
             <input type="checkbox" name="onSale" value="true" @(Request.QueryString["onSale"] == "true" ? "checked" : "") class="form-check-input" id="onSaleCheckbox" />
@@ -113,75 +248,75 @@
         {
             foreach (var book in Model)
             {
-        <tr class="@(book.DiscountPrice.HasValue ? "table-success" : "")">
-            <td style="text-align: center;">
-                <img src="~/Content/Images/Covers/@book.CoverImagePath"
-                     alt="@book.Title" style="width: 50px; height: auto;" />
-            </td>
-            <td>@book.Title</td>
-            <td>@book.Author</td>
-            <td>@book.Publisher</td>
-            <td>@book.YearOfPublishing</td>
-            <td>@book.AgeLimit+</td>
-            <td>
-                @if (book.DiscountPrice.HasValue)
-                {
-                    <span style="text-decoration: line-through;">@book.BuyPrice.ToString("C")</span><br />
-                    <span style="color: red;">@book.DiscountPrice.Value.ToString("C")</span>
-                }
-                else
-                {
-                    <span>@book.BuyPrice.ToString("C")</span>
-                }
-            </td>
-            <td>@book.BorrowPrice.ToString("C")</td>
-            <td>@(book.IsAvailableForBorrow ? "Borrow Only" : "Buy Only")</td>
-            <td>
-                <!-- Borrow or Add to Waiting List -->
-                @if (book.CopiesAvailable > 0 && book.IsAvailableForBorrow)
-                {
-                    <form method="get" action="@Url.Action("BorrowBook", "Books")" style="display: inline;">
-                        <input type="hidden" name="bookId" value="@book.Id" />
-                        <button type="submit" class="btn btn-warning btn-sm">Borrow</button>
-                    </form>
-                }
-                @if (book.IsAvailableForBorrow)
-                {
-                    <form method="post" action="@Url.Action("AddToWaitingList", "Books")">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="bookId" value="@book.Id" />
-                        <button type="submit" class="btn btn-danger btn-sm">Join Waiting List</button>
-                    </form>
+                <tr class="@(book.DiscountPrice.HasValue ? "table-success" : "")">
+                    <td style="text-align: center;">
+                        <img src="~/Content/Images/Covers/@book.CoverImagePath"
+                             alt="@book.Title" style="width: 50px; height: auto;" />
+                    </td>
+                    <td>@book.Title</td>
+                    <td>@book.Author</td>
+                    <td>@book.Publisher</td>
+                    <td>@book.YearOfPublishing</td>
+                    <td>@book.AgeLimit+</td>
+                    <td>
+                        @if (book.DiscountPrice.HasValue)
+                        {
+                            <span style="text-decoration: line-through;">@book.BuyPrice.ToString("C")</span><br />
+                            <span style="color: red;">@book.DiscountPrice.Value.ToString("C")</span>
+                        }
+                        else
+                        {
+                            <span>@book.BuyPrice.ToString("C")</span>
+                        }
+                    </td>
+                    <td>@book.BorrowPrice.ToString("C")</td>
+                    <td>@(book.IsAvailableForBorrow ? "Borrow Only" : "Buy Only")</td>
+                    <td>
+                        <!-- Borrow or Add to Waiting List -->
+                        @if (book.CopiesAvailable > 0 && book.IsAvailableForBorrow)
+                        {
+                            <form method="get" action="@Url.Action("BorrowBook", "Books")" style="display: inline;">
+                                <input type="hidden" name="bookId" value="@book.Id" />
+                                <button type="submit" class="btn btn-warning btn-sm">Borrow</button>
+                            </form>
+                        }
+                        @if (book.IsAvailableForBorrow)
+                        {
+                            <form method="post" action="@Url.Action("AddToWaitingList", "Books")">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="bookId" value="@book.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">Join Waiting List</button>
+                            </form>
 
-                }
-                <!-- Buy Now Form -->
-                @if (!book.IsAvailableForBorrow)
-                {
-                    <form method="post" action="@Url.Action("Payment", "PayPal")" style="display: inline;">
-                        <input type="hidden" name="bookId" value="@book.Id" />
-                        <button type="submit" class="btn btn-success btn-sm">Buy Now</button>
-                    </form>
-                }
-                <!-- View Waiting List Button -->
-                <form method="get" action="@Url.Action("WaitingListView", "Books")" style="display: inline;">
-                    <input type="hidden" name="bookId" value="@book.Id" />
-                    <button type="submit" class="btn btn-info btn-sm">View Waiting List</button>
-                </form>
-                @if (!book.IsAvailableForBorrow)
-                { 
-                    <!-- Add to Cart Form -->
-                <form method="post" action="/Cart/AddToCart" style="display: inline-block;">
-                    <input type="hidden" name="bookId" value="@book.Id" />
-                    <input type="hidden" name="title" value="@book.Title" />
-                    <input type="hidden" name="buyPrice" value="@book.BuyPrice" />
-                    <input type="hidden" name="discountPrice" value="@(book.DiscountPrice.HasValue ? book.DiscountPrice.Value : 0)" />
-                    <button type="submit" class="btn btn-primary btn-sm">Add to Cart</button>
-                </form>
-                }
-            </td>
+                        }
+                        <!-- Buy Now Form -->
+                        @if (!book.IsAvailableForBorrow)
+                        {
+                            <form method="post" action="@Url.Action("Payment", "PayPal")" style="display: inline;">
+                                <input type="hidden" name="bookId" value="@book.Id" />
+                                <button type="submit" class="btn btn-success btn-sm">Buy Now</button>
+                            </form>
+                        }
+                        <!-- View Waiting List Button -->
+                        <form method="get" action="@Url.Action("WaitingListView", "Books")" style="display: inline;">
+                            <input type="hidden" name="bookId" value="@book.Id" />
+                            <button type="submit" class="btn btn-info btn-sm">View Waiting List</button>
+                        </form>
+                        @if (!book.IsAvailableForBorrow)
+                        {
+                            <!-- Add to Cart Form -->
+                            <form method="post" action="/Cart/AddToCart" style="display: inline-block;">
+                                <input type="hidden" name="bookId" value="@book.Id" />
+                                <input type="hidden" name="title" value="@book.Title" />
+                                <input type="hidden" name="buyPrice" value="@book.BuyPrice" />
+                                <input type="hidden" name="discountPrice" value="@(book.DiscountPrice.HasValue ? book.DiscountPrice.Value : 0)" />
+                                <button type="submit" class="btn btn-primary btn-sm">Add to Cart</button>
+                            </form>
+                        }
+                    </td>
 
 
-        </tr>
+                </tr>
             }
         }
         else
@@ -192,3 +327,29 @@
         }
     </tbody>
 </table>
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center mt-4">
+        @if (ViewBag.CurrentPage > 1)
+        {
+            <li class="page-item">
+                <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1 })" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        }
+        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+        {
+            <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+            </li>
+        }
+        @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+        {
+            <li class="page-item">
+                <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1 })" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        }
+    </ul>
+</nav>

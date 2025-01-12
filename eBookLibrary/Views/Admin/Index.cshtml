@@ -1,21 +1,85 @@
-﻿@{
-    ViewBag.Title = "Admin Dashboard";
-}
+﻿@{ ViewBag.Title = "Admin Dashboard"; }
 
-<div class="container mt-5">
-    <!-- Header with Title and Log Out Button -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">Admin Dashboard</h2>
-        <form method="post" action="/Login/LogOut">
-            <button type="submit" class="btn btn-danger">Log Out</button>
-        </form>
-    </div>
+<h2 class="text-center my-4">Admin Dashboard</h2>
 
-    <!-- Action Buttons -->
+<div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6 text-center">
-            <a href="/Admin/ManageCatalog" class="btn btn-primary btn-lg mb-3 w-100">Manage Book Catalog</a>
-            <a href="/Admin/AddBook" class="btn btn-success btn-lg mb-3 w-100">Add New Book</a>
+        <!-- Centered Buttons -->
+        <div class="col-md-auto d-flex justify-content-center flex-wrap">
+            <a href="/Admin/ManageCatalog" class="btn btn-primary btn-lg mx-2 my-2">📚 Manage Book Catalog</a>
+            <a href="/Admin/AddBook" class="btn btn-success btn-lg mx-2 my-2">➕ Add New Book</a>
+            <a href="/Admin/ManageUsers" class="btn btn-info btn-lg mx-2 my-2">👤 Manage Users</a>
+            <a href="/Login/LogOut" class="btn btn-danger btn-lg mx-2 my-2">🔒 Log Out</a>
         </div>
     </div>
 </div>
+
+<style>
+    /* Style adjustments */
+    body {
+        background-color: #f8f9fa; /* Light gray background */
+    }
+
+    h2 {
+        font-family: 'Mulish', sans-serif;
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #343a40;
+    }
+
+    .btn {
+        font-size: 1.2rem;
+        font-weight: 600;
+        padding: 15px 20px;
+        border-radius: 10px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+
+        .btn-info:hover {
+            background-color: #117a8b;
+            border-color: #0c5460;
+        }
+
+    .container {
+        margin-top: 50px;
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        align-content: center;
+    }
+    body{
+        background-color:beige;
+    }
+</style>

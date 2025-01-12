@@ -178,16 +178,18 @@ namespace eBookLibrary.Controllers
         [HttpGet]
         public ActionResult EditBook(int id)
         {
+            // Retrieve the book by ID
             var book = _context.Books.SingleOrDefault(b => b.Id == id);
             if (book == null)
             {
                 TempData["Error"] = "Book not found.";
-                return RedirectToAction("ManageCatalog");
+                return RedirectToAction("ManageCatalog", "Admin");
             }
 
             return View(book);
         }
 
+        // POST: EditBook
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult EditBook(Book book, HttpPostedFileBase CoverImage)
@@ -198,13 +200,15 @@ namespace eBookLibrary.Controllers
                 return View(book);
             }
 
+            // Fetch the book from the database
             var bookInDb = _context.Books.SingleOrDefault(b => b.Id == book.Id);
             if (bookInDb == null)
             {
                 TempData["Error"] = "Book not found.";
-                return RedirectToAction("ManageCatalog");
+                return RedirectToAction("ManageCatalog", "Admin");
             }
 
+            // Update the fields with the new values
             bookInDb.Title = book.Title;
             bookInDb.Author = book.Author;
             bookInDb.Publisher = book.Publisher;
@@ -221,56 +225,78 @@ namespace eBookLibrary.Controllers
             bookInDb.InStock = book.InStock;
             bookInDb.IsBuyOnly = book.IsBuyOnly;
 
+            // Handle the file upload if a file is provided
             if (CoverImage != null && CoverImage.ContentLength > 0)
             {
+                // Validate file type and size
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-                var fileExtension = Path.GetExtension(CoverImage.FileName).ToLower();
+                var fileExtension = System.IO.Path.GetExtension(CoverImage.FileName).ToLower();
 
                 if (!allowedExtensions.Contains(fileExtension))
                 {
-                    ModelState.AddModelError("CoverImage", "Only image files are allowed.");
+                    ModelState.AddModelError("CoverImage", "Only image files (jpg, jpeg, png, gif) are allowed.");
+                    TempData["Error"] = "Please correct the errors in the form.";
                     return View(book);
                 }
 
-                int maxFileSize = 2 * 1024 * 1024;
+                // Optional: Limit file size (e.g., 2MB)
+                int maxFileSize = 2 * 1024 * 1024; // 2 MB
                 if (CoverImage.ContentLength > maxFileSize)
                 {
                     ModelState.AddModelError("CoverImage", "The cover image size cannot exceed 2 MB.");
+                    TempData["Error"] = "Please correct the errors in the form.";
                     return View(book);
                 }
 
-                var fileName = Path.GetFileName(CoverImage.FileName);
+                // Save the new cover image
+                var fileName = System.IO.Path.GetFileName(CoverImage.FileName);
                 var uploadsFolder = Server.MapPath("~/Uploads");
 
-                if (!Directory.Exists(uploadsFolder))
+                // Ensure the Uploads directory exists
+                if (!System.IO.Directory.Exists(uploadsFolder))
                 {
-                    Directory.CreateDirectory(uploadsFolder);
+                    System.IO.Directory.CreateDirectory(uploadsFolder);
                 }
 
+                // Generate a unique file name to prevent collisions
                 var uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
-                var path = Path.Combine(uploadsFolder, uniqueFileName);
+                var path = System.IO.Path.Combine(uploadsFolder, uniqueFileName);
 
                 try
                 {
                     CoverImage.SaveAs(path);
                     bookInDb.CoverImagePath = "/Uploads/" + uniqueFileName;
+
+                    // Optionally, delete the old cover image to save space
+                    if (!string.IsNullOrEmpty(bookInDb.CoverImagePath))
+                    {
+                        var existingFilePath = Server.MapPath(bookInDb.CoverImagePath);
+                        if (System.IO.File.Exists(existingFilePath))
+                        {
+                            System.IO.File.Delete(existingFilePath);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("", "Error uploading the cover image.");
+                    // Log the exception (ex) as needed
+                    ModelState.AddModelError("", "Error uploading the cover image. Please try again.");
+                    TempData["Error"] = "An error occurred while uploading the cover image.";
                     return View(book);
                 }
             }
 
+            // Save changes to the database
             try
             {
                 _context.SaveChanges();
                 TempData["Message"] = "Book updated successfully!";
-                return RedirectToAction("ManageCatalog");
+                return RedirectToAction("ManageCatalog", "Admin");
             }
             catch (Exception ex)
             {
-                TempData["Error"] = "An error occurred while updating the book.";
+                // Log the exception (ex) as needed
+                TempData["Error"] = "An error occurred while updating the book. Please try again.";
                 return View(book);
             }
         }

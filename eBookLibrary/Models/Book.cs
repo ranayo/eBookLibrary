@@ -28,7 +28,6 @@ namespace eBookLibrary.Models
         // Cover and Formats
         public string CoverImageUrl { get; set; } // URL for the book cover image (for web use)
         public string CoverImagePath { get; set; } // Physical or relative path to the cover image (for local storage)
-        public string Formats { get; set; } // List of available formats (e.g., epub, mobi, PDF, etc.)
 
         // Discount Information
         public decimal? DiscountPrice { get; set; } // Discounted price (null if no discount is active)
@@ -64,7 +63,6 @@ namespace eBookLibrary.Models
         // Constructor to Initialize Default Values
         public Book()
         {
-            Formats = string.Empty; // Initialize as a string
             IsAvailableForBorrow = true;
             CopiesAvailable = 0;
             Popularity = 0;
