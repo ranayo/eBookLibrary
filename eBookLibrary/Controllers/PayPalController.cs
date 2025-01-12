@@ -5,6 +5,10 @@ using System.Web.Mvc;
 using PayPal.Api;
 using eBookLibrary.Models;
 using System.Configuration;
+using System.Net;
+using System.Net.Mail;
+using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace eBookLibrary.Controllers
 {
@@ -95,7 +99,7 @@ namespace eBookLibrary.Controllers
             return RedirectToAction("PersonalPage", "User");
         }
 
-        public ActionResult Return(string paymentId, string PayerID, int? bookId, bool? isBorrowed)
+        public async Task<ActionResult> Return(string paymentId, string PayerID, int? bookId, bool? isBorrowed)
         {
             try
             {
@@ -129,8 +133,28 @@ namespace eBookLibrary.Controllers
 
                 if (executedPayment.state.ToLower() == "approved")
                 {
+                    // Add the book to the user's library
                     AddBookToUserLibrary(bookId.Value, isBorrowed.Value);
 
+                    // Prepare email notification
+                    var user = _context.Users.SingleOrDefault(u => u.Id == userId.Value);
+                    var book = _context.Books.SingleOrDefault(b => b.Id == bookId.Value);
+
+                    if (user != null && book != null)
+                    {
+                        var subject = isBorrowed.Value
+                            ? "Book Borrow Confirmation"
+                            : "Book Purchase Confirmation";
+
+                        var body = isBorrowed.Value
+                            ? $"You have successfully borrowed the book: {book.Title}. Please return it by {DateTime.Now.AddDays(30):yyyy-MM-dd}."
+                            : $"You have successfully purchased the book: {book.Title}!";
+
+                        // Send email notification
+                        await SendEmailAsync(user.Email, subject, body);
+                    }
+
+                    // Set TempData message
                     TempData["Message"] = isBorrowed.Value
                         ? "You have successfully borrowed the book for 30 days!"
                         : "You have successfully purchased the book!";
@@ -248,7 +272,35 @@ namespace eBookLibrary.Controllers
                 }
             }.Create(apiContext);
         }
+        private static async Task SendEmailAsync(string toEmail, string subject, string body)
+        {
+            try
+            {
+                using (var smtp = new SmtpClient("smtp.gmail.com", 587))
+                {
+                    smtp.Credentials = new NetworkCredential("ranayoun11@gmail.com", "ubkg rapo lpjf pyjl");
+                    smtp.EnableSsl = true;
 
+                    var mail = new MailMessage
+                    {
+                        From = new MailAddress("ranayoun11@gmail.com", "eBook Library"),
+                        Subject = subject,
+                        Body = body,
+                        IsBodyHtml = true
+                    };
+
+                    mail.To.Add(toEmail);
+
+                    Console.WriteLine("Sending email...");
+                    await smtp.SendMailAsync(mail);
+                    Console.WriteLine("Email sent successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending email: {ex.Message}");
+            }
+        }
         private void AddBookToUserLibrary(int bookId, bool isBorrowed)
         {
             var userId = (int?)Session["UserId"];

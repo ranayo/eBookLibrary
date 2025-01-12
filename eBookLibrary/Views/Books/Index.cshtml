@@ -167,7 +167,9 @@
                     <input type="hidden" name="bookId" value="@book.Id" />
                     <button type="submit" class="btn btn-info btn-sm">View Waiting List</button>
                 </form>
-                <!-- Add to Cart Form -->
+                @if (!book.IsAvailableForBorrow)
+                { 
+                    <!-- Add to Cart Form -->
                 <form method="post" action="/Cart/AddToCart" style="display: inline-block;">
                     <input type="hidden" name="bookId" value="@book.Id" />
                     <input type="hidden" name="title" value="@book.Title" />
@@ -175,6 +177,7 @@
                     <input type="hidden" name="discountPrice" value="@(book.DiscountPrice.HasValue ? book.DiscountPrice.Value : 0)" />
                     <button type="submit" class="btn btn-primary btn-sm">Add to Cart</button>
                 </form>
+                }
             </td>
 
 

@@ -1,0 +1,29 @@
+﻿@model IEnumerable<eBookLibrary.Models.User>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Manage Users</h2>
+    <a href="/Admin/Index" class="btn btn-primary">Back to Dashboard</a>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+<tr>
+    <td>@user.Username</td>
+    <td>@user.Email</td>
+    <td>@user.Role</td>
+    <td>
+        <a href="/Admin/EditUser/@user.Id" class="btn btn-warning">Edit</a>
+        <a href="/Admin/DeleteUser/@user.Id" class="btn btn-danger">Delete</a>
+    </td>
+</tr>}
+    </tbody>
+</table>

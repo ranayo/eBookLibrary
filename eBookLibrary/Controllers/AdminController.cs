@@ -1,10 +1,11 @@
-﻿using System.Linq;
-using System.Web.Mvc;
-using eBookLibrary.Models;
-using System;
+﻿using System;
+using System.Linq;
 using System.Web;
+using System.Web.Mvc;
 using System.IO;
 using System.Collections.Generic;
+using System.Data.Entity;
+using eBookLibrary.Models;
 
 namespace eBookLibrary.Controllers
 {
@@ -12,6 +13,7 @@ namespace eBookLibrary.Controllers
     {
         private readonly ApplicationDbContext _context;
 
+        // Constructor to initialize the database context
         public AdminController()
         {
             _context = new ApplicationDbContext();
@@ -24,12 +26,88 @@ namespace eBookLibrary.Controllers
             return View();
         }
 
-        // GET: AddBook
+        // Manage Users Page
+        [HttpGet]
+        public ActionResult ManageUsers()
+        {
+            var users = _context.Users.ToList();
+            return View(users);
+        }
+
+        // Edit User (GET)
+        [HttpGet]
+        public ActionResult EditUser(int id)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+            {
+                return HttpNotFound();
+            }
+            return View(user);
+        }
+
+        // Edit User (POST)
+        [HttpPost]
+        public ActionResult EditUser(int id, string username, string email, string newPassword)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+            {
+                return HttpNotFound();
+            }
+
+            user.Username = username;
+            user.Email = email;
+
+            if (!string.IsNullOrEmpty(newPassword))
+            {
+                user.PasswordHash = HashPassword(newPassword);
+            }
+
+            _context.SaveChanges();
+            return RedirectToAction("ManageUsers");
+        }
+
+        private string HashPassword(string password)
+        {
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                var bytes = System.Text.Encoding.UTF8.GetBytes(password);
+                var hash = sha256.ComputeHash(bytes);
+                return Convert.ToBase64String(hash);
+            }
+        }
+
+        // Delete User
+        [HttpGet]
+        public ActionResult DeleteUser(int id)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+            {
+                return HttpNotFound();
+            }
+            return View(user);
+        }
+
+        [HttpPost, ActionName("DeleteUser")]
+        public ActionResult ConfirmDeleteUser(int id)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+            {
+                return HttpNotFound();
+            }
+
+            _context.Users.Remove(user);
+            _context.SaveChanges();
+            return RedirectToAction("ManageUsers");
+        }
+
+        // Add Book (GET)
         [HttpGet]
         public ActionResult AddBook()
         {
-            // Populate formats for the dropdown list
-            ViewBag.Formats = new List<string> { "EPUB", "FB2", "MOBI", "PDF" };
             return View();
         }
 
@@ -40,26 +118,22 @@ namespace eBookLibrary.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    // Handle image upload
                     if (CoverImage != null && CoverImage.ContentLength > 0)
                     {
                         var fileName = Path.GetFileName(CoverImage.FileName);
                         var filePath = Path.Combine(Server.MapPath("~/Content/Images/Covers"), fileName);
                         Directory.CreateDirectory(Server.MapPath("~/Content/Images/Covers"));
                         CoverImage.SaveAs(filePath);
-                        book.CoverImagePath = fileName; // Save the file path in the database
+                        book.CoverImagePath = fileName;
                     }
 
-                    // Save the book to the database
                     _context.Books.Add(book);
                     _context.SaveChanges();
-
                     TempData["Message"] = "Book added successfully!";
                     return RedirectToAction("ManageCatalog");
                 }
 
                 TempData["Error"] = "Please fill in all required fields.";
-                ViewBag.Formats = new List<string> { "EPUB", "FB2", "MOBI", "PDF" };
                 return View(book);
             }
             catch (Exception ex)
@@ -69,8 +143,7 @@ namespace eBookLibrary.Controllers
             }
         }
 
-
-        // GET: ManageCatalog
+        // Manage Catalog
         [HttpGet]
         public ActionResult ManageCatalog()
         {
@@ -78,7 +151,6 @@ namespace eBookLibrary.Controllers
             return View(books);
         }
 
-        // DELETE: Delete Book
         [HttpPost]
         public ActionResult DeleteBook(int id)
         {
@@ -93,7 +165,6 @@ namespace eBookLibrary.Controllers
 
                 _context.Books.Remove(book);
                 _context.SaveChanges();
-
                 TempData["Message"] = "Book deleted successfully!";
                 return RedirectToAction("ManageCatalog");
             }
@@ -107,7 +178,6 @@ namespace eBookLibrary.Controllers
         [HttpGet]
         public ActionResult EditBook(int id)
         {
-            // Retrieve the book by ID
             var book = _context.Books.SingleOrDefault(b => b.Id == id);
             if (book == null)
             {
@@ -115,57 +185,95 @@ namespace eBookLibrary.Controllers
                 return RedirectToAction("ManageCatalog");
             }
 
-            // Populate formats for the dropdown list
-            ViewBag.Formats = new List<string> { "EPUB", "FB2", "MOBI", "PDF" };
-
-            return View(book); // Return the EditBook view with the book model
+            return View(book);
         }
 
-        // POST: EditBook
         [HttpPost]
-        public ActionResult EditBook(Book book)
+        [ValidateAntiForgeryToken]
+        public ActionResult EditBook(Book book, HttpPostedFileBase CoverImage)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Please correct the errors in the form.";
+                return View(book);
+            }
+
+            var bookInDb = _context.Books.SingleOrDefault(b => b.Id == book.Id);
+            if (bookInDb == null)
+            {
+                TempData["Error"] = "Book not found.";
+                return RedirectToAction("ManageCatalog");
+            }
+
+            bookInDb.Title = book.Title;
+            bookInDb.Author = book.Author;
+            bookInDb.Publisher = book.Publisher;
+            bookInDb.Genre = book.Genre;
+            bookInDb.BuyPrice = book.BuyPrice;
+            bookInDb.BorrowPrice = book.BorrowPrice;
+            bookInDb.IsAvailableForBorrow = book.IsAvailableForBorrow;
+            bookInDb.CopiesAvailable = book.CopiesAvailable;
+            bookInDb.YearOfPublishing = book.YearOfPublishing;
+            bookInDb.AgeLimit = book.AgeLimit;
+            bookInDb.DiscountPrice = book.DiscountPrice;
+            bookInDb.DiscountStartDate = book.DiscountStartDate;
+            bookInDb.DiscountEndDate = book.DiscountEndDate;
+            bookInDb.InStock = book.InStock;
+            bookInDb.IsBuyOnly = book.IsBuyOnly;
+
+            if (CoverImage != null && CoverImage.ContentLength > 0)
+            {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                var fileExtension = Path.GetExtension(CoverImage.FileName).ToLower();
+
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    ModelState.AddModelError("CoverImage", "Only image files are allowed.");
+                    return View(book);
+                }
+
+                int maxFileSize = 2 * 1024 * 1024;
+                if (CoverImage.ContentLength > maxFileSize)
+                {
+                    ModelState.AddModelError("CoverImage", "The cover image size cannot exceed 2 MB.");
+                    return View(book);
+                }
+
+                var fileName = Path.GetFileName(CoverImage.FileName);
+                var uploadsFolder = Server.MapPath("~/Uploads");
+
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
+                var path = Path.Combine(uploadsFolder, uniqueFileName);
+
+                try
+                {
+                    CoverImage.SaveAs(path);
+                    bookInDb.CoverImagePath = "/Uploads/" + uniqueFileName;
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", "Error uploading the cover image.");
+                    return View(book);
+                }
+            }
+
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    TempData["Error"] = "Please fill in all required fields.";
-                    ViewBag.Formats = new List<string> { "EPUB", "FB2", "MOBI", "PDF" }; // Re-populate formats in case of error
-                    return View(book); // Return the edit view with validation errors
-                }
-
-                // Fetch the book from the database
-                var bookInDb = _context.Books.SingleOrDefault(b => b.Id == book.Id);
-                if (bookInDb == null)
-                {
-                    TempData["Error"] = "Book not found.";
-                    return RedirectToAction("ManageCatalog");
-                }
-
-                // Update the fields with the new values
-                bookInDb.Title = book.Title;
-                bookInDb.Author = book.Author;
-                bookInDb.Genre = book.Genre;
-                bookInDb.BuyPrice = book.BuyPrice;
-                bookInDb.BorrowPrice = book.BorrowPrice;
-                bookInDb.DiscountPrice = book.DiscountPrice;
-                bookInDb.DiscountStartDate = book.DiscountStartDate;
-                bookInDb.DiscountEndDate = book.DiscountEndDate;
-
-                // Save changes to the database
                 _context.SaveChanges();
-
                 TempData["Message"] = "Book updated successfully!";
-                return RedirectToAction("ManageCatalog"); // Redirect to the catalog after success
+                return RedirectToAction("ManageCatalog");
             }
             catch (Exception ex)
             {
-                TempData["Error"] = $"An error occurred while updating the book. Please try again. Error: {ex.Message}";
-                ViewBag.Formats = new List<string> { "EPUB", "FB2", "MOBI", "PDF" }; // Re-populate formats in case of error
-                return View(book); // Return to the edit view in case of an exception
+                TempData["Error"] = "An error occurred while updating the book.";
+                return View(book);
             }
         }
-
 
         // Notifications for Waiting List
         public void NotifyUser(int bookId)
@@ -176,7 +284,6 @@ namespace eBookLibrary.Controllers
                 if (waitingList.Any())
                 {
                     var nextUser = waitingList.First();
-                    // Logic to notify user (e.g., email or system notification)
                     TempData["Message"] = $"User {nextUser.UserId} has been notified about the availability of the book.";
                     _context.WaitingLists.Remove(nextUser);
                     _context.SaveChanges();
@@ -196,7 +303,6 @@ namespace eBookLibrary.Controllers
                 var borrowedBooks = _context.BorrowedBooks.Where(b => b.ReturnDate <= DateTime.Now.AddDays(5)).ToList();
                 foreach (var borrowedBook in borrowedBooks)
                 {
-                    // Logic to send reminder (e.g., email or system notification)
                     TempData["Message"] = $"Reminder sent to User {borrowedBook.UserId} for book {borrowedBook.BookId}.";
                 }
             }

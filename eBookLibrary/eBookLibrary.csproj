@@ -197,6 +197,7 @@
     <Compile Include="Controllers\PersonalLibraryController.cs" />
     <Compile Include="Controllers\RegisterController.cs" />
     <Compile Include="Controllers\UserController.cs" />
+    <Compile Include="Controllers\UserFeedbackController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -225,6 +226,7 @@
     <Compile Include="Models\BorrowViewModel.cs" />
     <Compile Include="Models\CartItem.cs" />
     <Compile Include="Models\EmailSender.cs" />
+    <Compile Include="Models\UserFeedback.cs" />
     <Compile Include="Models\Feedbacks.cs" />
     <Compile Include="Models\FeedbackViewModel.cs" />
     <Compile Include="Models\IEmailSender.cs" />
@@ -291,6 +293,7 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\js\scripts.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
+    <Content Include="Scripts\script.js" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -323,6 +326,10 @@
     <Content Include="Views\BorrowBook\BorrowConfirm.cshtml" />
     <Content Include="Views\Books\WaitingListView.cshtml" />
     <Content Include="Views\Books\BookDetails.cshtml" />
+    <Content Include="Views\UserFeedback\Index.cshtml" />
+    <Content Include="Views\Admin\DeleteUser.cshtml" />
+    <Content Include="Views\Admin\EditUser.cshtml" />
+    <Content Include="Views\Admin\ManageUsers.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

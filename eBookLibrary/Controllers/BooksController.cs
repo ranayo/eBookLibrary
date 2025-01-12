@@ -29,7 +29,7 @@ namespace eBookLibrary.Controllers
         }
 
         // Display all books with filters
-        public ActionResult Index(string search, string sortBy, string genre, int? ageLimit, bool? onSale, int? yearOfPublishing)
+        public ActionResult Index(string search, string sortBy, string genre, int? ageLimit, bool? onSale, int? yearOfPublishing, string availability)
         {
             var books = _context.Books.AsQueryable();
 
@@ -57,6 +57,18 @@ namespace eBookLibrary.Controllers
             {
                 books = books.Where(b => b.DiscountPrice.HasValue);
             }
+            // Apply availability filter
+            if (!string.IsNullOrEmpty(availability))
+            {
+                if (availability == "borrow")
+                {
+                    books = books.Where(b => b.IsAvailableForBorrow); // Borrow Only
+                }
+                else if (availability == "buy")
+                {
+                    books = books.Where(b => !b.IsAvailableForBorrow); // Buy Only
+                }
+            }
 
             // Sorting
             switch (sortBy)
@@ -80,6 +92,7 @@ namespace eBookLibrary.Controllers
 
             return View(books.ToList());
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> BuyBookAsync(int bookId)
@@ -115,8 +128,13 @@ namespace eBookLibrary.Controllers
                 _context.Purchases.Add(purchase);
                 _context.SaveChanges();
 
+                // Debugging
+                System.Diagnostics.Debug.WriteLine("Book purchase recorded. Calling SendEmailAsync...");
+
                 // Send email notification
                 await SendEmailAsync("ranayoun11@gmail.com", "Book Purchase Confirmation", $"You have successfully purchased the book: {book.Title}.");
+
+                System.Diagnostics.Debug.WriteLine("SendEmailAsync completed.");
                 TempData["Message"] = "You successfully purchased the book.";
             }
             else
@@ -126,6 +144,7 @@ namespace eBookLibrary.Controllers
 
             return RedirectToAction("Index");
         }
+
 
 
         [HttpGet]
@@ -337,12 +356,13 @@ namespace eBookLibrary.Controllers
             {
                 using (var smtp = new SmtpClient("smtp.gmail.com", 587)) // Use port 587 for TLS
                 {
+                    // Set your Gmail credentials (use App Passwords if 2FA is enabled)
                     smtp.Credentials = new NetworkCredential("ranayoun11@gmail.com", "ubkg rapo lpjf pyjl");
                     smtp.EnableSsl = true; // Enable SSL/TLS
 
                     var mail = new MailMessage
                     {
-                        From = new MailAddress("ranayoun11@gmail.com", "eBook Library"), // Optional: Add a display name
+                        From = new MailAddress("ranayoun11@gmail.com", "eBook Library"), // Add a display name
                         Subject = subject,
                         Body = body,
                         IsBodyHtml = true // Set to true if the email body contains HTML
@@ -350,24 +370,30 @@ namespace eBookLibrary.Controllers
 
                     mail.To.Add(toEmail);
 
+                    // Debugging log
+                    System.Diagnostics.Debug.WriteLine($"Sending email to {toEmail} with subject '{subject}'.");
+
                     // Send the email
                     await smtp.SendMailAsync(mail);
 
-                    // Log success message
-                    TempData["Message"] = "Email sent successfully.";
+                    // Log success
+                    System.Diagnostics.Debug.WriteLine("Email sent successfully.");
                 }
             }
             catch (SmtpException smtpEx)
             {
-                // Log SMTP-specific issues
+                // Log SMTP-specific errors
+                System.Diagnostics.Debug.WriteLine($"SMTP Error: {smtpEx.Message}");
                 TempData["Error"] = $"SMTP Error: {smtpEx.Message}";
             }
             catch (Exception ex)
             {
-                // Log general issues
+                // Log other errors
+                System.Diagnostics.Debug.WriteLine($"Failed to send email: {ex.Message}");
                 TempData["Error"] = $"Failed to send email: {ex.Message}";
             }
         }
+
 
         private int GetCurrentUserId()
         {

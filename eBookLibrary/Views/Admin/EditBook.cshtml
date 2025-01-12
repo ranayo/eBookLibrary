@@ -32,14 +32,6 @@
         @Html.TextBoxFor(m => m.DiscountPrice, new { @class = "form-control", type = "number", step = "0.01" })
     </div>
     <div class="form-group">
-        <label>Format</label>
-        @Html.DropDownListFor(
-            m => m.Formats, 
-            new SelectList(ViewBag.Formats as List<string>, Model.Formats), 
-            "Select a Format", 
-            new { @class = "form-control" })
-    </div>
-    <div class="form-group">
         <label>Discount Start Date</label>
         @Html.TextBoxFor(m => m.DiscountStartDate, new { @class = "form-control", type = "date" })
     </div>

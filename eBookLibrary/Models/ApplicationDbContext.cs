@@ -26,6 +26,7 @@ namespace eBookLibrary.Models
         public DbSet<BorrowedBook> BorrowedBooks { get; set; }
         public DbSet<Purchase> Purchases { get; set; }
 
+        public DbSet<UserFeedback> UserFeedbacks { get; set; }
 
         // DbSet for Admins
         public DbSet<Admin> Admins { get; set; }

@@ -167,11 +167,11 @@
                                 </select>
                             </div>
 
-                                            <div class="mb-3">
-                                                <label for="feedbackContent" class="form-label">Feedback:</label>
-                                                <textarea id="feedbackContent" name="feedbackContent" class="form-control" rows="4" required></textarea>
-                                            </div>
-                                                            <button type="submit" class="btn btn-primary">Submit Feedback</button>}
+                            <div class="mb-3">
+                                <label for="feedbackContent" class="form-label">Feedback:</label>
+                                <textarea id="feedbackContent" name="feedbackContent" class="form-control" rows="4" required></textarea>
+                            </div>
+                          <button type="submit" class="btn btn-primary">Submit Feedback</button>}
                     </div>
                 </div>
             </div>
@@ -180,7 +180,7 @@
             <div class="col">
                 @if (Model != null && Model.Any())
                 {
-    <h4 class="text-center mb-2">Submitted Feedback</h4>
+                <h4 class="text-center mb-2">Submitted Feedback</h4>
                     <table class="table table-bordered table-hover">
                         <thead class="table-light">
                             <tr>
@@ -196,13 +196,12 @@
                 <td>@feedback.Rating</td>
                 <td>@feedback.FeedbackContent</td>
                 <td>@feedback.SubmittedAt</td>
-            </tr>
-}
+            </tr>}
                         </tbody>
                     </table> }
-                else
-                {
-    <p class="text-muted">No feedback available yet.</p>}
+                                else
+                                {
+                    <p class="text-muted">No feedback available yet.</p>}
             </div>
         </div>
     </div>
