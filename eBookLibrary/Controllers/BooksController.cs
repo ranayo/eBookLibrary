@@ -38,6 +38,7 @@ namespace eBookLibrary.Controllers
             ViewBag.Genres = _context.Books.Select(b => b.Genre).Distinct().ToList();
             ViewBag.Years = _context.Books.Select(b => b.YearOfPublishing).Distinct().OrderByDescending(y => y).ToList();
 
+
             // Apply filters
             if (!string.IsNullOrEmpty(search))
             {
@@ -247,8 +248,8 @@ namespace eBookLibrary.Controllers
                 {
                     book.CopiesAvailable++;
 
-                    // Notify the first user in the waiting list
-                    NotifyNextUserInWaitingList(bookId);
+                    // Notify the next three users in the waiting list
+                    NotifyNextUsersInWaitingList(bookId).Wait();
                 }
 
                 _context.SaveChanges();
@@ -266,6 +267,7 @@ namespace eBookLibrary.Controllers
         [HttpGet]
         public ActionResult WaitingListView(int bookId)
         {
+            // Fetch the selected book
             var book = _context.Books.SingleOrDefault(b => b.Id == bookId);
             if (book == null)
             {
@@ -273,22 +275,27 @@ namespace eBookLibrary.Controllers
                 return RedirectToAction("Index");
             }
 
+            // Fetch waiting list and sort by DateAdded
             var waitingList = _context.WaitingLists
                 .Where(w => w.BookId == bookId)
                 .OrderBy(w => w.DateAdded)
-                .ToList() // Execute the query first
+                .ToList() // Execute the query
                 .Select(w =>
                 {
-                    var user = _context.Users.FirstOrDefault(u => u.Id == w.UserId);
-                    return new WaitingListViewModel
+            // Fetch the user details
+            var user = _context.Users.FirstOrDefault(u => u.Id == w.UserId);
+
+            // Use ExpectedAvailabilityDate directly from the database
+            return new WaitingListViewModel
                     {
                         Username = user != null ? user.Username : "Unknown",
-                        DateAdded = w.DateAdded
-                    };
+                        DateAdded = w.DateAdded,
+                        ExpectedAvailabilityDate = w.ExpectedAvailabilityDate // Pull directly from the database
+            };
                 })
                 .ToList();
 
-
+            // Pass the data to the ViewModel
             var viewModel = new WaitingListPageViewModel
             {
                 BookTitle = book.Title,
@@ -297,6 +304,7 @@ namespace eBookLibrary.Controllers
 
             return View(viewModel);
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -319,11 +327,13 @@ namespace eBookLibrary.Controllers
             var existingEntry = _context.WaitingLists.FirstOrDefault(w => w.BookId == bookId && w.UserId == userId);
             if (existingEntry == null)
             {
+                // Each user's ExpectedAvailabilityDate is 30 days from their own DateAdded
                 var waitingEntry = new WaitingList
                 {
                     BookId = bookId,
                     UserId = userId,
-                    DateAdded = DateTime.Now
+                    DateAdded = DateTime.Now, // Date when the user joins
+                    ExpectedAvailabilityDate = DateTime.Now.AddDays(30) // Exactly 30 days from the DateAdded
                 };
 
                 _context.WaitingLists.Add(waitingEntry);
@@ -338,24 +348,29 @@ namespace eBookLibrary.Controllers
 
             return RedirectToAction("WaitingListView", new { bookId });
         }
-
-
-        private async Task NotifyNextUserInWaitingList(int bookId)
+        private async Task NotifyNextUsersInWaitingList(int bookId)
         {
-            var nextInLine = _context.WaitingLists.Where(w => w.BookId == bookId).OrderBy(w => w.DateAdded).FirstOrDefault();
-            if (nextInLine != null)
+            // Fetch the top 3 users from the waiting list
+            var nextInLine = _context.WaitingLists
+                .Where(w => w.BookId == bookId)
+                .OrderBy(w => w.DateAdded)
+                .Take(3)
+                .ToList();
+
+            foreach (var userEntry in nextInLine)
             {
-                var user = _context.Users.SingleOrDefault(u => u.Id == nextInLine.UserId);
+                var user = _context.Users.SingleOrDefault(u => u.Id == userEntry.UserId);
                 if (user != null)
                 {
-                    await SendEmailAsync(user.Email, "Book Available for Borrowing", "The book you were waiting for is now available. Please borrow it within 5 days.");
-
-                    _context.WaitingLists.Remove(nextInLine);
-                    _context.SaveChanges();
+                    await SendEmailAsync(user.Email, "Book Available for Borrowing", $"The book you were waiting for is now available. Please borrow it within 5 days.");
                 }
-            }
-        }
 
+                // Remove the user from the waiting list after notification
+                _context.WaitingLists.Remove(userEntry);
+            }
+
+            _context.SaveChanges();
+        }
 
         private async Task SendEmailAsync(string toEmail, string subject, string body)
         {
@@ -383,7 +398,7 @@ namespace eBookLibrary.Controllers
                     // Send the email
                     await smtp.SendMailAsync(mail);
 
-                    // Log success
+                    // Log successf
                     System.Diagnostics.Debug.WriteLine("Email sent successfully.");
                 }
             }
@@ -399,6 +414,121 @@ namespace eBookLibrary.Controllers
                 System.Diagnostics.Debug.WriteLine($"Failed to send email: {ex.Message}");
                 TempData["Error"] = $"Failed to send email: {ex.Message}";
             }
+        }
+
+        [HttpGet]
+        public ActionResult DownloadBook(int bookId, string format)
+        {
+            // Validate the format
+            var validFormats = new[] { "epub", "mobi", "pdf", "f2b" };
+            if (string.IsNullOrEmpty(format) || !validFormats.Contains(format.ToLower()))
+            {
+                TempData["Error"] = "Invalid or unsupported format selected.";
+                return RedirectToAction("Index");
+            }
+
+            // Fetch the book based on its ID
+            var book = _context.Books.SingleOrDefault(b => b.Id == bookId);
+            if (book == null)
+            {
+                TempData["Error"] = "Book not found.";
+                return RedirectToAction("Index");
+            }
+
+            // Generate the file name and path
+            string baseDirectory = System.Configuration.ConfigurationManager.AppSettings["BookFilesDirectory"];
+            string fileName = $"{book.Title.Replace(" ", "_").ToLower()}.{format.ToLower()}";
+            string filePath = Path.Combine(baseDirectory, fileName);
+
+            // Debugging
+            System.Diagnostics.Debug.WriteLine($"File Path: {filePath}");
+
+            // Check if the file exists
+            if (!System.IO.File.Exists(filePath))
+            {
+                TempData["Error"] = $"The requested file '{fileName}' for the book '{book.Title}' in format '{format}' does not exist. Expected path: {filePath}";
+                return RedirectToAction("Index");
+            }
+
+            // Determine MIME type using if-else
+            string mimeType;
+            if (format.ToLower() == "pdf")
+            {
+                mimeType = "application/pdf";
+            }
+            else if (format.ToLower() == "epub")
+            {
+                mimeType = "application/epub+zip";
+            }
+            else if (format.ToLower() == "mobi")
+            {
+                mimeType = "application/x-mobipocket-ebook";
+            }
+            else
+            {
+                mimeType = "application/octet-stream"; // Default MIME type for other formats
+            }
+
+            // Return the file for download
+            return File(filePath, mimeType, fileName);
+        }
+
+
+        [HttpPost]
+        public ActionResult ViewRating(int bookId)
+        {
+            // Fetch the logged-in user's ID
+            int userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                TempData["Error"] = "You must be logged in to view the rating.";
+                return RedirectToAction("Index");
+            }
+
+            // Check if any ratings exist for this book
+            bool anyRatingsExist = _context.Feedbacks.Any(f => f.BookId == bookId);
+            if (!anyRatingsExist)
+            {
+                TempData["Error"] = "No ratings have been submitted for this book.";
+                return RedirectToAction("Index");
+            }
+
+            // Check if the logged-in user has submitted feedback
+            var userFeedback = _context.Feedbacks.SingleOrDefault(f => f.BookId == bookId && f.UserId == userId);
+
+            // Calculate the average rating for the book
+            var averageRating = _context.Feedbacks
+                .Where(f => f.BookId == bookId)
+                .Average(f => (double?)f.Rating) ?? 0;
+
+            // Fetch the book details
+            var book = _context.Books.SingleOrDefault(b => b.Id == bookId);
+            if (book == null)
+            {
+                TempData["Error"] = "Book not found.";
+                return RedirectToAction("Index");
+            }
+
+            // Handle the case where the logged-in user hasn't submitted feedback
+            int? userRating = userFeedback != null ? (int?)userFeedback.Rating : null;
+
+            // If no feedback exists for the logged-in user, display an informational message
+            if (userFeedback == null)
+            {
+                TempData["Info"] = "You have not rated this book yet.";
+            }
+
+            // Set the ViewModel
+            var model = new RatingViewModel
+            {
+                BookTitle = book.Title,
+                UserRating = userRating.HasValue ? userRating.Value : 0, // Provide a default value if null
+                AverageRating = averageRating,
+                CoverImagePath = book.CoverImagePath // Pass the cover image path
+            };
+
+            // Pass the model to the view
+            return View(model);
         }
 
 

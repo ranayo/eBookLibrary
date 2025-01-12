@@ -33,6 +33,7 @@ namespace eBookLibrary.Models
         public decimal? DiscountPrice { get; set; } // Discounted price (null if no discount is active)
         public DateTime? DiscountStartDate { get; set; } // Start date for the discount (null if no discount)
         public DateTime? DiscountEndDate { get; set; } // End date for the discount (null if no discount)
+        public string Formats { get; set; } // Available formats (e.g., "epub,mobi,pdf")
 
         // Inventory and Sales
         public int InStock { get; set; } // Total stock count for the book

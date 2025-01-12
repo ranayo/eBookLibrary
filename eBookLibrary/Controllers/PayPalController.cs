@@ -8,7 +8,6 @@ using System.Configuration;
 using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
-using System.Threading.Tasks;
 
 namespace eBookLibrary.Controllers
 {
@@ -94,82 +93,6 @@ namespace eBookLibrary.Controllers
             {
                 System.Diagnostics.Debug.WriteLine($"Exception in ProcessPayment: {ex.Message}");
                 TempData["Error"] = $"An error occurred: {ex.Message}";
-            }
-
-            return RedirectToAction("PersonalPage", "User");
-        }
-
-        public async Task<ActionResult> Return(string paymentId, string PayerID, int? bookId, bool? isBorrowed)
-        {
-            try
-            {
-                if (!bookId.HasValue || !isBorrowed.HasValue)
-                {
-                    TempData["Error"] = "Invalid payment details.";
-                    return RedirectToAction("PersonalPage", "User");
-                }
-
-                var userId = (int?)Session["UserId"];
-                if (!userId.HasValue)
-                {
-                    TempData["Error"] = "You must be logged in to complete the payment.";
-                    return RedirectToAction("Login", "User");
-                }
-
-                // Check if the user already has this book borrowed
-                var existingUserBook = _context.UserBooks
-                    .SingleOrDefault(ub => ub.BookId == bookId.Value && ub.UserId == userId.Value && ub.IsBorrowed);
-
-                if (existingUserBook != null)
-                {
-                    TempData["Error"] = "You have already borrowed this book.";
-                    return RedirectToAction("PersonalPage", "User");
-                }
-
-                var config = GetPayPalConfig();
-                var apiContext = new APIContext(new OAuthTokenCredential(config).GetAccessToken());
-                var payment = new Payment { id = paymentId };
-                var executedPayment = payment.Execute(apiContext, new PaymentExecution { payer_id = PayerID });
-
-                if (executedPayment.state.ToLower() == "approved")
-                {
-                    // Add the book to the user's library
-                    AddBookToUserLibrary(bookId.Value, isBorrowed.Value);
-
-                    // Prepare email notification
-                    var user = _context.Users.SingleOrDefault(u => u.Id == userId.Value);
-                    var book = _context.Books.SingleOrDefault(b => b.Id == bookId.Value);
-
-                    if (user != null && book != null)
-                    {
-                        var subject = isBorrowed.Value
-                            ? "Book Borrow Confirmation"
-                            : "Book Purchase Confirmation";
-
-                        var body = isBorrowed.Value
-                            ? $"You have successfully borrowed the book: {book.Title}. Please return it by {DateTime.Now.AddDays(30):yyyy-MM-dd}."
-                            : $"You have successfully purchased the book: {book.Title}!";
-
-                        // Send email notification
-                        await SendEmailAsync(user.Email, subject, body);
-                    }
-
-                    // Set TempData message
-                    TempData["Message"] = isBorrowed.Value
-                        ? "You have successfully borrowed the book for 30 days!"
-                        : "You have successfully purchased the book!";
-
-                    return RedirectToAction("PersonalPage", "User");
-                }
-                else
-                {
-                    TempData["Error"] = "Payment failed.";
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["Error"] = $"An error occurred: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"Exception in Return: {ex.Message}");
             }
 
             return RedirectToAction("PersonalPage", "User");
@@ -301,62 +224,147 @@ namespace eBookLibrary.Controllers
                 Console.WriteLine($"Error sending email: {ex.Message}");
             }
         }
-        private void AddBookToUserLibrary(int bookId, bool isBorrowed)
+
+        public async Task<ActionResult> Return(string paymentId, string PayerID, int? bookId, bool? isBorrowed)
         {
-            var userId = (int?)Session["UserId"];
-            if (userId.HasValue)
+            try
             {
-                var book = _context.Books.SingleOrDefault(b => b.Id == bookId);
-                if (book != null)
+                if (!bookId.HasValue || !isBorrowed.HasValue)
                 {
-                    if (isBorrowed)
-                    {
-                        // Check if there are available copies to borrow
-                        if (book.CopiesAvailable > 0)
-                        {
-                            book.CopiesAvailable--; // Decrement available copies for borrowing
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException("No copies available to borrow.");
-                        }
-                    }
-                    else
-                    {
-                        // For buying, decrement InStock
-                        if (book.InStock > 0)
-                        {
-                            book.InStock--; // Decrement the total stock for buying
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException("No stock available for this book.");
-                        }
-                    }
+                    TempData["Error"] = "Invalid payment details.";
+                    return RedirectToAction("PersonalPage", "User");
+                }
 
+                var userId = (int?)Session["UserId"];
+                if (!userId.HasValue)
+                {
+                    TempData["Error"] = "You must be logged in to complete the payment.";
+                    return RedirectToAction("Login", "User");
+                }
+
+                // Check if the user has already borrowed 3 books
+                var borrowedBooksCount = _context.UserBooks
+                    .Count(ub => ub.UserId == userId.Value && ub.IsBorrowed && ub.BorrowEndDate > DateTime.Now);
+
+                if (isBorrowed.Value && borrowedBooksCount >= 3)
+                {
+                    TempData["Error"] = "You can only borrow up to 3 books at a time. Please return a book before borrowing a new one.";
+                    return RedirectToAction("PersonalPage", "User");
+                }
+
+                // Proceed with executing the payment
+                var config = GetPayPalConfig();
+                var apiContext = new APIContext(new OAuthTokenCredential(config).GetAccessToken());
+                var payment = new Payment { id = paymentId };
+                var executedPayment = payment.Execute(apiContext, new PaymentExecution { payer_id = PayerID });
+
+                if (executedPayment.state.ToLower() == "approved")
+                {
                     // Add the book to the user's library
-                    var userBook = new UserBook
-                    {
-                        UserId = userId.Value,
-                        BookId = bookId,
-                        IsOwned = !isBorrowed, // If not borrowed, it is owned
-                        IsBorrowed = isBorrowed,
-                        BorrowEndDate = isBorrowed ? DateTime.Now.AddDays(30) : (DateTime?)null // Set borrow end date for borrowed books only
-                    };
+                    AddBookToUserLibrary(bookId.Value, isBorrowed.Value);
 
-                    _context.UserBooks.Add(userBook);
-                    _context.SaveChanges();
+                    // Prepare email notification
+                    var user = _context.Users.SingleOrDefault(u => u.Id == userId.Value);
+                    var book = _context.Books.SingleOrDefault(b => b.Id == bookId.Value);
+
+                    if (user != null && book != null)
+                    {
+                        var subject = isBorrowed.Value
+                            ? "Book Borrow Confirmation"
+                            : "Book Purchase Confirmation";
+
+                        var body = isBorrowed.Value
+                            ? $"You have successfully borrowed the book: {book.Title}. Please return it by {DateTime.Now.AddDays(30):yyyy-MM-dd}."
+                            : $"You have successfully purchased the book: {book.Title}!";
+
+                        // Send email notification
+                        await SendEmailAsync(user.Email, subject, body);
+                    }
+
+                    // Set TempData message
+                    TempData["Message"] = isBorrowed.Value
+                        ? "You have successfully borrowed the book for 30 days!"
+                        : "You have successfully purchased the book!";
+
+                    return RedirectToAction("PersonalPage", "User");
                 }
                 else
                 {
-                    throw new InvalidOperationException("Book not found.");
+                    TempData["Error"] = "Payment failed.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"An error occurred: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"Exception in Return: {ex.Message}");
+            }
+
+            return RedirectToAction("PersonalPage", "User");
+        }
+
+
+        private void AddBookToUserLibrary(int bookId, bool isBorrowed)
+        {
+            var userId = (int?)Session["UserId"];
+            if (!userId.HasValue)
+            {
+                throw new UnauthorizedAccessException("User is not logged in.");
+            }
+
+            // Check if the user has already borrowed 3 books
+            var borrowedBooksCount = _context.UserBooks
+                .Count(ub => ub.UserId == userId.Value && ub.IsBorrowed && ub.BorrowEndDate > DateTime.Now);
+
+            if (isBorrowed && borrowedBooksCount >= 3)
+            {
+                throw new InvalidOperationException("You can only borrow up to 3 books at a time. Please return a book before borrowing a new one.");
+            }
+
+            var book = _context.Books.SingleOrDefault(b => b.Id == bookId);
+            if (book == null)
+            {
+                throw new InvalidOperationException("Book not found.");
+            }
+
+            if (isBorrowed)
+            {
+                // Check if there are available copies to borrow
+                if (book.CopiesAvailable > 0)
+                {
+                    book.CopiesAvailable--; // Decrement available copies for borrowing
+                }
+                else
+                {
+                    throw new InvalidOperationException("No copies available to borrow.");
                 }
             }
             else
             {
-                throw new UnauthorizedAccessException("User is not logged in.");
+                // For buying, decrement InStock
+                if (book.InStock > 0)
+                {
+                    book.InStock--; // Decrement the total stock for buying
+                }
+                else
+                {
+                    throw new InvalidOperationException("No stock available for this book.");
+                }
             }
+
+            // Add the book to the user's library
+            var userBook = new UserBook
+            {
+                UserId = userId.Value,
+                BookId = bookId,
+                IsOwned = !isBorrowed, // If not borrowed, it is owned
+                IsBorrowed = isBorrowed,
+                BorrowEndDate = isBorrowed ? DateTime.Now.AddDays(30) : (DateTime?)null // Set borrow end date for borrowed books only
+            };
+
+            _context.UserBooks.Add(userBook);
+            _context.SaveChanges();
         }
+
 
         protected override void Dispose(bool disposing)
         {

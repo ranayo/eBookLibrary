@@ -42,8 +42,16 @@ namespace eBookLibrary.Controllers
                     IsBorrowed = ub.IsBorrowed,
                     BorrowEndDate = ub.BorrowEndDate,
                     IsOwned = ub.IsOwned,
-        })
+                    Format = ub.Book.Formats // Include Formats here
+
+                })
                 .ToList();
+
+            // Debug: Log the fetched data
+            foreach (var book in personalLibrary)
+            {
+                Debug.WriteLine($"BookId: {book.BookId}, Title: {book.Title}, Format: {book.Format}");
+            }
 
             if (!personalLibrary.Any())
             {

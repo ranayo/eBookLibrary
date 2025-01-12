@@ -18,14 +18,35 @@ namespace eBookLibrary.Controllers
         // GET: UserFeedback
         public ActionResult Index()
         {
-            // Fetch feedback from the database, order by most recent
-            var feedbacks = _context.UserFeedbacks
-                .OrderByDescending(f => f.SubmittedAt)
-                .ToList();
+            try
+            {
+                // Fetch feedback from the database, order by most recent
+                var feedbacks = _context.UserFeedbacks
+                    .OrderByDescending(f => f.SubmittedAt)
+                    .ToList();
 
-            // Pass feedbacks to the view
-            return View(feedbacks);
+                // If no feedbacks exist, create an empty list
+                if (feedbacks == null || !feedbacks.Any())
+                {
+                    feedbacks = new List<UserFeedback>();
+                }
+
+                // Fetch the total number of books
+                var totalBooks = _context.Books.Count();
+
+                // Pass feedbacks and totalBooks to the view
+                ViewBag.TotalBooks = totalBooks;
+
+                return View(feedbacks);
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions and log them (optional)
+                TempData["Error"] = "An error occurred while fetching feedback. Please try again.";
+                return View(new List<UserFeedback>()); // Return an empty list to avoid crashes
+            }
         }
+
 
         // POST: UserFeedback/Create
         [HttpPost]

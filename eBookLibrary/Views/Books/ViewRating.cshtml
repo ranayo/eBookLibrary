@@ -1,0 +1,235 @@
+﻿@model eBookLibrary.Models.RatingViewModel
+<style>
+    .d-flex{
+       display:flex;
+       flex-wrap:wrap;
+       flex-direction:row;
+       margin: 10px;
+       padding:10px;
+       
+    }
+    .review-card {
+        margin-left:20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        max-width: 600px;
+        height:300px;
+        background-color: #fff;
+        font-family: Arial, sans-serif;
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .reviewer-name {
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    .verified-badge {
+        color: #f77b00;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .review-rating {
+        margin: 8px 0;
+        color: #f77b00;
+        font-size: 18px;
+    }
+
+    .review-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin: 8px 0;
+    }
+
+    .review-date {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 8px;
+    }
+
+    .review-content {
+        font-size: 16px;
+        color: #333;
+        line-height: 1.6;
+        margin-bottom: 16px;
+    }
+
+        .review-content a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+            .review-content a:hover {
+                text-decoration: underline;
+            }
+
+    .review-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+    }
+
+        .review-actions button {
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .review-actions .btn-outline-primary {
+            border: 1px solid #007bff;
+            color: #007bff;
+            background: none;
+        }
+
+            .review-actions .btn-outline-primary:hover {
+                background: #007bff;
+                color: #fff;
+            }
+
+        .review-actions .btn-outline-secondary {
+            border: 1px solid #6c757d;
+            color: #6c757d;
+            background: none;
+        }
+
+            .review-actions .btn-outline-secondary:hover {
+                background: #6c757d;
+                color: #fff;
+            }
+
+        .review-actions .btn-outline-danger {
+            border: 1px solid #dc3545;
+            color: #dc3545;
+            background: none;
+        }
+
+            .review-actions .btn-outline-danger:hover {
+                background: #dc3545;
+                color: #fff;
+            }
+
+    .stars {
+        color: #f77b00; /* Star color */
+        font-size: 18px;
+        line-height: 1;
+    }
+
+    .review-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        max-width: 600px;
+        background-color: #fff;
+        font-family: Arial, sans-serif;
+    }
+
+        .review-card h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+</style>
+<script>
+@helper GetStars(double? rating)
+{
+    if (!rating.HasValue || rating.Value <= 0)
+    {
+        // If rating is null or zero, render no stars
+        @:No Rating
+        return;
+    }
+
+    int fullStars = (int)Math.Floor(rating.Value); // Full stars
+    bool hasHalfStar = rating.Value - fullStars >= 0.5; // Half star logic
+    int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0); // Remaining empty stars
+
+    // Render full stars
+    for (int i = 0; i < fullStars; i++)
+    {
+        @:&#9733; <!-- Full star -->
+    }
+
+    // Render half star
+    if (hasHalfStar)
+    {
+        @:&#189; <!-- Half star -->
+    }
+
+    // Render empty stars
+    for (int i = 0; i < emptyStars; i++)
+    {
+        @:&#9734; <!-- Empty star -->
+    }
+}
+
+</script>
+<h2>View Rating</h2>
+<body>
+    @if (Model != null)
+    {
+        <div class="row justify-content-center">
+            <!-- Main Container -->
+            <div class="d-flex flex-row align-items-start">
+                <!-- Image Section -->
+                <div class="me-3">
+                    <img src="@Url.Content("~/Content/Images/Covers/" + Model.CoverImagePath)"
+                         class="card-img" alt="@Model.BookTitle"
+                         style="height: 300px; width: 200px; object-fit: cover; border-radius: 8px;">
+                </div>
+
+                <!-- Review Card Section -->
+                <div class="review-card flex-grow-1">
+                    <h3><strong>Book Title:</strong> @Model.BookTitle</h3>
+                    <div class="mb-2">
+                        @if (Model.UserRating != null)
+                        {
+                            <p>
+                                <strong>Your Rating:</strong>
+                                <span class="stars">
+                                    @Html.Raw(GetStars(Model.UserRating))
+                                </span>
+                            </p>
+                        }
+                        else
+                        {
+                            <p><strong>Your Rating:</strong> You have not rated this book yet.</p>
+                        }
+                    </div>
+                    <div class="mb-2">
+                        <p>
+                            <span class="stars" data-rating="@Model.AverageRating">
+                                <strong>Average Rating:</strong>
+                                @Model.AverageRating
+                            </span>
+                        </p>
+                    </div>
+                    <div class="mt-3">
+                        <p><strong>Reviewed:</strong> Your review text or content goes here...</p>
+                    </div>
+                    <div class="review-actions">
+                        <span>10 people found this helpful</span>
+                        <button class="btn btn-sm btn-outline-primary">Helpful</button>
+                        <button class="btn btn-sm btn-outline-secondary">Share</button>
+                        <button class="btn btn-sm btn-outline-danger">Report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning text-center">
+            No rating information is available for this book.
+        </div>
+    }
+</body>
+

@@ -1,128 +1,197 @@
 ﻿@model List<eBookLibrary.Models.PersonalLibraryViewModel>
+<style>
 
+
+    .card {
+        display: flex;
+        flex-direction: column; /* Align content vertically */
+        text-align: center;
+        justify-content: center;
+        align-items: center; /* Center content horizontally */
+        margin-bottom: 20px;
+        padding: 15px; /* Add padding for inner content spacing */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08); /* Softer box shadow */
+        border-radius: 10px; /* Rounded corners for better appearance */
+        background-color: #eaefed; /* Ensure background is white */
+        transition: transform 0.2s ease, box-shadow 0.2s ease; /* Smooth hover effect */
+    }
+
+        .card:hover {
+            transform: scale(1.05); /* Slightly enlarge on hover */
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.1); /* More prominent shadow */
+        }
+    /* Container for the image */
+    .image-container {
+        position: relative;
+        overflow: hidden; /* Ensures zoom effect stays within the container */
+        height: 250px; /* Ensure consistent height for all images */
+        width: 100%; /* Full width */
+    }
+
+    /* Default image style */
+    .book-cover {
+        transition: transform 0.2s ease-out; /* Smooth zoom transition */
+        transform-origin: center; /* Default zoom from the center */
+    }
+
+    /* On hover, zoom into the image */
+    .image-container:hover .book-cover {
+        transform: scale(2); /* Zoom in by 200% */
+        cursor: zoom-in; /* Change cursor to indicate zoom */
+    }
+    .alert {
+        margin-top: 20px;
+    }
+        /* Move image with cursor */
+        .image-container:hover {
+        position: relative;
+    }
+
+        .image-container:hover .book-cover {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+    /* Allow the zoom effect to follow the cursor */
+    .image-container {
+        position: relative;
+    }
+
+        .image-container:hover .book-cover {
+            position: absolute;
+            transform-origin: 0 0;
+            object-fit: cover;
+        }
+</style>
 <div class="container my-5">
     <h2 class="text-center mb-5 text-primary">My Personal Library</h2>
 
     <!-- Button to go back to All Books page -->
     <div class="text-end mb-4">
-        <a href="/Books/Index" class="btn btn-outline-primary">
-            <i class="bi bi-arrow-left"></i> Back to All Books
+        <a href="/Books/Index" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2 shadow">
+            <i class="bi bi-arrow-left"></i>
+            <span><< Back to All Books</span>
         </a>
     </div>
-
-    <!-- Display TempData Messages -->
-    @if (TempData["Message"] != null)
+    @if (TempData.ContainsKey("Message"))
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <strong>Success:</strong> @TempData["Message"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-success text-center mt-2">
+            <strong>Message:</strong> @TempData["Message"]
         </div>
     }
+
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Error:</strong> @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+<div class="alert alert-danger text-cente text-center" role="alert">
+    <strong>Error:</strong> @TempData["Error"]
+</div>}
 
     <!-- Debug Information -->
     @if (Model == null)
     {
-        <div class="alert alert-danger text-center">
-            <strong>Error:</strong> No data found. Please ensure the controller is passing the correct data.
-        </div>
-    }
-    else if (!Model.Any())
-    {
-        <div class="alert alert-info text-center">
-            <strong>Your personal library is empty.</strong>
-        </div>
-    }
-    else
-    {
-        <p class="text-muted text-center mb-4">You have <strong>@Model.Count</strong> book(s) in your library.</p>
+<div class="alert alert-danger text-center">
+    <strong>Error:</strong> No data found. Please ensure the controller is passing the correct data.
+</div> }
+else if (!Model.Any())
+{
+<div class="alert alert-info text-center">
+    <strong>Your personal library is empty.</strong>
+</div> }
+else
+{
+<p class="text-muted text-center mb-4 sx-5" style="font-size: 2rem; font-weight: bold; line-height: 1.5;">
+    You have <strong>@Model.Count</strong> book(s) in your library.
+</p>
 
-        <div class="row g-4">
-            @foreach (var book in Model)
-            {
-                <div class="col-md-6 col-lg-4">
-                    <div class="card shadow-sm h-100">
-                        <!-- Book Cover -->
-                        <img src="@Url.Content("~/Content/Images/Cover" + book.CoverImagePath)"
-                             class="card-img-top img-fluid"
-                             alt="@book.Title"
-                             style="height: 250px; object-fit: cover;" />
+                <div class="row col-lg-pull-6">
+                    @foreach (var book in Model)
+                    {
+    <div class="col-md-6 col-lg-4 d-flex mb-lg-4 ">
+        <div class="card shadow-lg ">
+            <!-- Book Cover -->
+            <div class="image-container">
+                <img src="~/Content/Images/Covers/@book.CoverImagePath"
+                     class="card-img-top img-fluid book-cover"
+                     alt="@book.Title"
+                     style="height: 250px; object-fit: cover;" />
+            </div>
 
-                        <!-- Book Details -->
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title text-primary">@book.Title</h5>
-                            <p class="card-text"><strong>Author:</strong> @book.Author</p>
 
-                            @if (!string.IsNullOrEmpty(book.Format))
-                            {
-                                <p class="card-text"><strong>Format:</strong> @book.Format</p>
-                            }
+            <!-- Book Details -->
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title text-primary">@book.Title</h5>
+                <p class="card-text"><strong>Author:</strong> @book.Author</p>
 
-                            <!-- Borrow Status -->
-                            @if (book.IsBorrowed)
-                            {
-                                <p class="text-warning">
-                                    <strong>Borrowed</strong>
-                                    (Remaining Time:
-                                    @(book.BorrowEndDate.HasValue
+                @if (!string.IsNullOrEmpty(book.Format))
+                {
+            <p class="card-text"><strong>Format:</strong> @book.Format</p>}
+
+                <!-- Borrow Status -->
+                @if (book.IsBorrowed)
+                {
+            <p class="text-warning">
+                <strong>Borrowed</strong>
+                (Remaining Time:
+                @(book.BorrowEndDate.HasValue
                                         ? (book.BorrowEndDate.Value - DateTime.Now).Days + " days"
                                         : "N/A"))
-                                </p>
-                            }
+            </p>}
 
-                            <!-- Download Button -->
-                            @if (!string.IsNullOrEmpty(book.Format))
-                            {
-                                <form method="get" action="/PersonalLibrary/DownloadBook" class="mt-auto">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="bookId" value="@book.BookId" />
-                                    <button type="submit" class="btn btn-success w-100">
-                                        Download (@book.Format)
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
-                                <p class="text-muted">No format available for this book.</p>
-                            }
-
-                            <!-- Delete Button -->
-                            @if (book.IsOwned)
-                            {
-                                <form method="post" action="/User/DeleteBook" class="mt-3">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="bookId" value="@book.BookId" />
-                                    <button type="submit" class="btn btn-danger w-100"
-                                            onclick="return confirm('Are you sure you want to delete this book?');">
-                                        Delete
-                                    </button>
-                                </form>
-                            }
-
-                            <!-- Rating Section -->
-                            <form method="post" action="/User/RateBook" class="mt-3">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="bookId" value="@book.BookId" />
-                                <label for="rating-@book.BookId" class="form-label"><strong>Rate this book:</strong></label>
-                                <select id="rating-@book.BookId" name="rating" class="form-select">
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                </select>
-                                <button type="submit" class="btn btn-primary w-100 mt-2">Submit Rating</button>
-                            </form>
+                <!-- Rating Section -->
+                <form method="post" action="/User/RateBook" class="mt-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="bookId" value="@book.BookId" />
+                    <div class="mb-3">
+                        <label for="rating-@book.BookId" class="form-label text-primary"><strong>Rate this book:</strong></label>
+                        <div class="d-flex align-items-center gap-2">
+                            <select id="rating-@book.BookId" name="rating" class="form-select flex-grow-1">
+                                <option value="1">1 - Poor</option>
+                                <option value="2">2 - Fair</option>
+                                <option value="3">3 - Good</option>
+                                <option value="4">4 - Very Good</option>
+                                <option value="5">5 - Excellent</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary ms-2">Submit</button>
                         </div>
                     </div>
-                </div>
-            }
+                </form>
+
+                @if (!string.IsNullOrEmpty(book.Title))
+                {
+                    <form method="get" action="/Books/DownloadBook">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="bookId" value="@book.BookId" />
+                        <label for="format">Choose a format:</label>
+                        <select id="format" name="format" class="form-control">
+                            <option value="epub">EPUB</option>
+                            <option value="mobi">MOBI</option>
+                            <option value="pdf">PDF</option>
+                            <option value="f2b">F2B</option>
+                        </select>
+                        <button type="submit" class="btn btn-success w-100 mt-3">
+                            Download
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted">No title available for this book.</p>
+                }
+
+                <!-- Delete Button -->
+                @if (book.IsOwned)
+                {
+            <form method="post" action="/User/DeleteBook" class="mt-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="bookId" value="@book.BookId" />
+                <button type="submit" class="btn btn-danger w-100"
+                        onclick="return confirm('Are you sure you want to delete this book?');">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+            </form>}
+            </div>
         </div>
-    }
+    </div>}
+                </div>}
 </div>

@@ -39,11 +39,10 @@ namespace eBookLibrary
                 defaults: new { controller = "Admin", action = "BookCatalog", id = UrlParameter.Optional }
             );
 
-            // Default route
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
+                defaults: new { controller = "UserFeedback", action = "Index", id = UrlParameter.Optional }
             );
 
         }

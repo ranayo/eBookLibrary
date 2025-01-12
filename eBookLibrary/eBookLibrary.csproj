@@ -226,6 +226,7 @@
     <Compile Include="Models\BorrowViewModel.cs" />
     <Compile Include="Models\CartItem.cs" />
     <Compile Include="Models\EmailSender.cs" />
+    <Compile Include="Models\RatingViewModel.cs" />
     <Compile Include="Models\UserFeedback.cs" />
     <Compile Include="Models\Feedbacks.cs" />
     <Compile Include="Models\FeedbackViewModel.cs" />
@@ -272,6 +273,7 @@
     <Content Include="Content\Images\Covers\book4.jpg" />
     <Content Include="Content\Images\Covers\book5.jpg" />
     <Content Include="Content\Images\Covers\book6.jpg" />
+    <Content Include="Content\Images\Covers\book60.jpg" />
     <Content Include="Content\Images\Covers\book7.jpg" />
     <Content Include="Content\Images\Covers\book8.jpg" />
     <Content Include="Content\Images\Covers\book9.jpg" />
@@ -330,9 +332,11 @@
     <Content Include="Views\Admin\DeleteUser.cshtml" />
     <Content Include="Views\Admin\EditUser.cshtml" />
     <Content Include="Views\Admin\ManageUsers.cshtml" />
+    <Content Include="Views\Books\ViewRating.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="BookFiles\" />
     <Folder Include="Content\Books\" />
   </ItemGroup>
   <ItemGroup>

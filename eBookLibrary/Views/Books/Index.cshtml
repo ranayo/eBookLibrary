@@ -35,9 +35,6 @@
             transition: all 0.3s ease;
         }
 
-            .navbar a:hover {
-                background-color: #0056b3;
-            }
 
     /* Filter Form Styling */
     form {
@@ -96,11 +93,6 @@
             text-align: center;
             border: 1px solid #ddd;
         }
-
-        table tr:hover {
-            background-color: #f1f1f1;
-        }
-
     .table-success {
         background-color: #d4edda !important;
     }
@@ -131,12 +123,11 @@
             color: white;
         }
 </style>
-
+<body></body>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>All Books</h2>
     <!-- Log Out Button -->
 
-   
         <a href="/Login/LogOut" class="btn btn-danger btn-lg mx-2 my-2">🔒 Log Out</a>
    
     <!-- Navigation Bar -->
@@ -231,6 +222,7 @@
 <table class="table table-bordered table-striped">
     <thead class="table-dark">
         <tr>
+
             <th>Cover</th>
             <th>Title</th>
             <th>Author</th>
@@ -297,11 +289,14 @@
                                 <button type="submit" class="btn btn-success btn-sm">Buy Now</button>
                             </form>
                         }
-                        <!-- View Waiting List Button -->
-                        <form method="get" action="@Url.Action("WaitingListView", "Books")" style="display: inline;">
-                            <input type="hidden" name="bookId" value="@book.Id" />
-                            <button type="submit" class="btn btn-info btn-sm">View Waiting List</button>
-                        </form>
+                        @if (book.IsAvailableForBorrow)
+                        {
+                            <!-- View Waiting List Button -->
+                            <form method="get" action="@Url.Action("WaitingListView", "Books")" style="display: inline;">
+                                <input type="hidden" name="bookId" value="@book.Id" />
+                                <button type="submit" class="btn btn-info btn-sm">View Waiting List</button>
+                            </form>
+                        }
                         @if (!book.IsAvailableForBorrow)
                         {
                             <!-- Add to Cart Form -->
@@ -313,6 +308,13 @@
                                 <button type="submit" class="btn btn-primary btn-sm">Add to Cart</button>
                             </form>
                         }
+
+                        <form method="post" action="@Url.Action("ViewRating", "Books")">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="bookId" value="@book.Id" />
+                            <button type="submit" class="btn btn-primary btn-sm">View Rating</button>
+                        </form>
+
                     </td>
 
 

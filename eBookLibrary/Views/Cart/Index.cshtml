@@ -1,49 +1,93 @@
 ﻿@model List<eBookLibrary.Models.CartItem>
 
-<h2>Shopping Cart</h2>
+<div class="container mt-5">
+    <div class="text-end mb-4">
+        <a href="/Books/Index" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to All Books
+        </a>
+    </div>
+    <h2 class="text-center text-primary">Shopping Cart</h2>
+    <hr class="mb-4">
 
-@if (Model == null || !Model.Any())
-{
-    <p>Your cart is empty.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Price</th>
-                <th>Quantity</th>
-                <th>Total</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-warning text-center" role="alert">
+            Your cart is empty. Browse books to add to your cart!
+        </div>
+    }
+    else
+    {
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
                 <tr>
-                    <td>@item.Title</td>
-                    <td>$@item.FinalPrice.ToString("F2")</td>
-                    <td>@item.Quantity</td>
-                    <td>$@(item.FinalPrice * item.Quantity)</td>
-                    <td>
-                        <form method="post" action="/Cart/RemoveFromCart">
-                            <input type="hidden" name="bookId" value="@item.BookId" />
-                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                        </form>
-                    </td>
+                    <th>Title</th>
+                    <th>Original Price</th>
+                    <th>Discounted Price</th>
+                    <th>Final Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-    <h4>Total: $@Model.Sum(item => item.FinalPrice * item.Quantity).ToString("F2")</h4>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="align-middle">@item.Title</td>
+                        <td class="align-middle">@item.BuyPrice.ToString("F2")</td>
+                        <td class="align-middle">
+                            @if (item.DiscountPrice.HasValue)
+                            {
+                                @item.DiscountPrice.Value.ToString("F2")
+                            }
+                            else
+                            {
+                                <span class="text-muted">No Discount</span>
+                            }
+                        </td>
+                        <td class="align-middle">
+                            @if (item.DiscountPrice.HasValue)
+                            {
+                                @item.DiscountPrice.Value.ToString("F2")
+                            }
+                            else
+                            {
+                                @item.BuyPrice.ToString("F2")
+                            }
+                        </td>
+                        <td class="align-middle">@item.Quantity</td>
+                        <td class="align-middle">
+                            @((item.Quantity * (item.DiscountPrice.HasValue ? item.DiscountPrice.Value : item.BuyPrice)).ToString("F2"))
+                        </td>
+                        <td class="align-middle">
+                            <form method="post" action="/Cart/RemoveFromCart" onsubmit="return confirmDelete();">
+                                <input type="hidden" name="bookId" value="@item.BookId" />
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-trash"></i> Remove
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
 
-    <!-- Pay Now Button -->
-    <form method="post" action="/PayPal/ProcessCartPayment">
-        <button type="submit" class="btn btn-success mt-3">Pay Now</button>
-    </form>
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="text-success">
+                <strong>Total:</strong> @Model.Sum(item => item.Quantity * (item.DiscountPrice.HasValue ? item.DiscountPrice.Value : item.BuyPrice)).ToString("F2")
+            </h4>
 
-}
+            <form method="post" action="/PayPal/ProcessCartPayment">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-credit-card"></i> Pay Now
+                </button>
+            </form>
+        </div>
+    }
 
-<!-- Button to go back to All Books -->
-<a href="/Books/Index" class="btn btn-primary mt-3">Back to All Books</a>
+    <script>
+        function confirmDelete() {
+            return confirm("Are you sure you want to remove this item from your cart?");
+        }
+    </script>
+</div>

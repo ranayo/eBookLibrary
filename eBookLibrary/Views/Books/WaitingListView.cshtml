@@ -19,10 +19,10 @@
         </div>
     }
 
-    @if (TempData["Success"] != null)
+    @if (TempData["Message"] != null)
     {
         <div class="alert alert-success text-center">
-            @TempData["Success"]
+            @TempData["Message"]
         </div>
     }
 
@@ -48,37 +48,62 @@
                 </p>
                 <p class="text-secondary">
                     <i class="fas fa-clock"></i> The next copy will be available in approximately
-                    <span class="badge bg-secondary">@(30 * Model.WaitingList.Count) days</span>.
+                    <span class="badge bg-secondary">
+                        @(
+            Model.WaitingList.Any()
+                ? Model.WaitingList
+                    .Sum(entry => entry.ExpectedAvailabilityDate.HasValue
+                        ? (entry.ExpectedAvailabilityDate.Value.Date - DateTime.Now.Date).Days
+                        : 0) + " days"
+                : "No waiting list")
+                    </span>.
                 </p>
+
+
             </div>
         </div>
 
         <!-- Waiting List Table -->
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover">
-                <thead class="bg-secondary text-white">
-                    <tr>
-                        <th scope="col">User</th>
-                        <th scope="col">Date Added</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var entry in Model.WaitingList)
-                    {
-                        <tr>
-                            <td>@entry.Username</td>
-                            <td>@entry.DateAdded.ToString("g")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-warning text-center">
-            <i class="fas fa-info-circle"></i> No users are currently on the waiting list for this book.
-        </div>
-    }
-</div>
+        <!-- Waiting List Table -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover">
+                                <thead class="bg-secondary text-white">
+                                    <tr>
+                                        <th scope="col">User</th>
+                                        <th scope="col">Date Added</th>
+                                        <th scope="col">Expected Availability Date</th>
+                                        <th scope="col">Days Remaining</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var entry in Model.WaitingList)
+                                    {
+                                        var daysRemaining = entry.ExpectedAvailabilityDate.HasValue
+                                            ? (entry.ExpectedAvailabilityDate.Value.Date - DateTime.Now.Date).Days
+                                            : 0;
 
+                    <tr>
+                        <td>@entry.Username</td>
+                        <td>@entry.DateAdded.ToString("g")</td>
+                        <td>
+                            @(entry.ExpectedAvailabilityDate.HasValue
+                                    ? entry.ExpectedAvailabilityDate.Value.ToString("g")
+                                    : "N/A")
+                        </td>
+                        <td>
+                            @(daysRemaining > 0
+                                    ? $"{daysRemaining} days"
+                                    : "Available now")
+                        </td>
+                    </tr>}
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-info-circle"></i> No users are currently on the waiting list for this book.
+                        </div>
+                    }
+</div>

@@ -30,7 +30,7 @@ namespace eBookLibrary.Controllers
             int userId = Convert.ToInt32(Session["UserId"]);
 
             // Debug log to confirm user ID
-            Debug.WriteLine($"Debug: Session[\"UserId\"] = {userId}");
+            Debug.WriteLine($"Debug: Session[\"UserId\"] = {userId }");
 
             try
             {
@@ -186,7 +186,11 @@ namespace eBookLibrary.Controllers
                 }
 
                 _context.SaveChanges();
+                Debug.WriteLine($"Before setting TempData['Message']: {TempData["Message"]}");
                 TempData["Message"] = "Your feedback has been submitted.";
+                Debug.WriteLine($"After setting TempData['Message']: {TempData["Message"]}");
+
+
             }
             catch (Exception ex)
             {

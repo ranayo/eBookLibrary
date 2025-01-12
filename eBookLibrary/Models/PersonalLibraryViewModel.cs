@@ -15,7 +15,7 @@ namespace eBookLibrary.Models
         public DateTime? BorrowEndDate { get; set; }
         public bool IsOwned { get; set; }
         public int UserId { get; set; }
-        public string Format { get; set; } // Include the format field
+        public string Format { get; set; } // Add this property for the book's format
 
 
     }

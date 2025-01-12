@@ -5,7 +5,7 @@
 <head>
     <link href="/Content/bootstrap.min.css" rel="stylesheet">
     <link href="/Content/css/styles.css" rel="stylesheet">
-    <script src="@Url.Content("~/Scripts/script.js")"></script>
+    <script src="~/Scripts/js/scripts.js"></script>
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -110,10 +110,6 @@
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm" id="mainNav">
         <div class="container px-5">
             <a class="navbar-brand fw-bold" href="#page-top">OUR LIBRARY</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-                Menu
-                <i class="bi-list"></i>
-            </button>
             <div class="collapse navbar-collapse" id="navbarResponsive">
                 <ul class="navbar-nav ms-auto me-4 my-3 my-lg-0">
                     <li class="nav-item">
@@ -135,16 +131,26 @@
         </div>
     </header>
 
+    <!-- Dynamic Book Count -->
+    <div class="container mt-5">
+        <p class="text-center" style="font-size: 1.5rem; font-weight: bold;">
+            We currently have <strong>@ViewBag.TotalBooks</strong> books available in our collection!
+        </p>
+    </div>
+
+    <!-- Feedback Section -->
     <div class="container mt-5">
         <h1 class="text-center mb-5">User Feedback</h1>
 
         <!-- Display Messages -->
         @if (TempData["Message"] != null)
         {
-<div class="alert alert-success">@TempData["Message"]</div>}
+            <div class="alert alert-success">@TempData["Message"]</div>
+        }
         @if (TempData["Error"] != null)
         {
-<div class="alert alert-danger">@TempData["Error"]</div>}
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
 
         <div class="row">
             <!-- Feedback Form -->
@@ -154,7 +160,7 @@
                         <h4 class="text-center mb-2">Submit Your Feedback</h4>
                         @using (Html.BeginForm("Create", "UserFeedback", FormMethod.Post))
                         {
-            @Html.AntiForgeryToken()
+                            @Html.AntiForgeryToken()
 
                             <div class="mb-3">
                                 <label for="rating" class="form-label">Rating (1-5):</label>
@@ -171,7 +177,8 @@
                                 <label for="feedbackContent" class="form-label">Feedback:</label>
                                 <textarea id="feedbackContent" name="feedbackContent" class="form-control" rows="4" required></textarea>
                             </div>
-                          <button type="submit" class="btn btn-primary">Submit Feedback</button>}
+                            <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                        }
                     </div>
                 </div>
             </div>
@@ -180,7 +187,7 @@
             <div class="col">
                 @if (Model != null && Model.Any())
                 {
-                <h4 class="text-center mb-2">Submitted Feedback</h4>
+                    <h4 class="text-center mb-2">Submitted Feedback</h4>
                     <table class="table table-bordered table-hover">
                         <thead class="table-light">
                             <tr>
@@ -192,16 +199,19 @@
                         <tbody>
                             @foreach (var feedback in Model)
                             {
-            <tr>
-                <td>@feedback.Rating</td>
-                <td>@feedback.FeedbackContent</td>
-                <td>@feedback.SubmittedAt</td>
-            </tr>}
+                                <tr>
+                                    <td>@feedback.Rating</td>
+                                    <td>@feedback.FeedbackContent</td>
+                                    <td>@feedback.SubmittedAt</td>
+                                </tr>
+                            }
                         </tbody>
-                    </table> }
-                                else
-                                {
-                    <p class="text-muted">No feedback available yet.</p>}
+                    </table>
+                }
+                else
+                {
+                    <p class="text-muted">No feedback available yet.</p>
+                }
             </div>
         </div>
     </div>
